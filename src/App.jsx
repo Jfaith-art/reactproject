@@ -1,15 +1,10 @@
 import { useEffect, useState } from 'react'
 import { getParts } from './partsapi'
 import { BIKES, CATEGORIES } from './parts'
+import Header from './header'
+import { getPartImage, getPartImageFallback } from './api'
  
 const peso = (n) => `₱${n.toLocaleString('en-PH')}`
-const PART_IMAGES = {
-  Brakes: '/parts/brakes.svg',
-  Engine: '/parts/engine.svg',
-  Drive: '/parts/drive.svg',
-  Electrical: '/parts/electrical.svg',
-  Filters: '/parts/filters.svg',
-}
  
 export default function App() {
   const [filters, setFilters] = useState({ query: '', category: 'all', bike: 'all' })
@@ -61,13 +56,12 @@ export default function App() {
  
   return (
     <main className="shop">
-      <header className="top">
-        <h1>Parts Depot</h1>
-        <button className="cart-toggle" type="button" aria-expanded={cartOpen} aria-controls="cart-panel" onClick={() => setCartOpen((open) => !open)}>
-          Cart: {count} item{count === 1 ? '' : 's'}
-          {total > 0 && ` · ${peso(total)}`}
-        </button>
-      </header>
+      <Header
+        cartCount={count}
+        cartTotal={total}
+        cartOpen={cartOpen}
+        onToggleCart={() => setCartOpen((open) => !open)}
+      />
 
       {orderMessage && <p className="note success" role="status">{orderMessage}</p>}
 
@@ -128,11 +122,22 @@ export default function App() {
         <p className="note">No parts found. Remove a filter or try a different search.</p>
       )}
  
-      <ul className="parts" aria-busy={loading}>
+      <ul className="parts" id="parts-catalog" aria-busy={loading}>
         {result.parts.map((p) => (
           <li key={p.id} className="part">
             <div className="part-info">
-              <img className="part-image" src={PART_IMAGES[p.category]} alt={`${p.name} illustration`} loading="lazy" width="112" height="84" />
+              <img
+                className="part-image"
+                src={getPartImage(p)}
+                alt={`${p.name} illustration`}
+                loading="lazy"
+                width="112"
+                height="84"
+                onError={(event) => {
+                  event.currentTarget.onerror = null
+                  event.currentTarget.src = getPartImageFallback(p.category)
+                }}
+              />
               <div>
                 <h2>{p.name}</h2>
                 <p className="meta">{p.category} — fits {p.bikes.join(', ')}</p>
